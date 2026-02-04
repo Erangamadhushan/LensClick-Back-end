@@ -1,0 +1,89 @@
+
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+}
+
+model Album {
+  id        Int      @id @default(autoincrement())
+  title     String
+  eventType EventType
+  isPrivate Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  photos    Photo[]
+  access    AlbumAccess[]
+}
+
+model Photo {
+  id          Int      @id @default(autoincrement())
+  albumId     Int
+  publicId    String
+  secureUrl   String
+  createdAt   DateTime @default(now())
+
+  album Album @relation(fields: [albumId], references: [id])
+}
+
+model AlbumAccess {
+  id            Int      @id @default(autoincrement())
+  albumId       Int
+  codeHash      String
+  expiresAt     DateTime?
+  maxUses       Int?
+  usedCount     Int      @default(0)
+  canDownload   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  album Album @relation(fields: [albumId], references: [id])
+}
+
+model Booking {
+  id        Int      @id @default(autoincrement())
+  organizerName      String
+  organizerEmail     String
+  phoneNumber        String
+  servicePackage     String
+  eventType EventType
+  eventDate DateTime
+  eventTime String
+  eventLocation String
+  eventDescription String
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  PHOTOGRAPHER
+  CUSTOMER
+  ORGANIZER
+}
+
+enum EventType {
+  WEDDING
+  BIRTHDAY
+  CONVOCATION
+  OTHER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
