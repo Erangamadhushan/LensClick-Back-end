@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config({
   //path: ".env.test",
-  path: ".env.test.v1",
+  path: process.env.NODE_ENV === "test" ? ".env.test" : undefined,
   override: true,
   debug: false,
 });
