@@ -1,4 +1,12 @@
 import { PrismaClient } from "@prisma/client";
+import dotenv from "dotenv";
+
+dotenv.config({
+  path: ".env.test",
+  override: true,
+  debug: false,
+});
+
 
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === "test" ? [] : ["query", "error"],
@@ -9,22 +17,25 @@ beforeAll(async () => {
 });
 
 afterEach(async () => {
-  // Disable FK checks
   await prisma.$executeRawUnsafe(`SET FOREIGN_KEY_CHECKS = 0;`);
 
-  const tableNames = await prisma.$queryRaw<
-    { table_name: string }[]
+  const tables = await prisma.$queryRaw<
+    { table_name: string | null }[]
   >`
     SELECT table_name
     FROM information_schema.tables
-    WHERE table_schema = DATABASE();
+    WHERE table_schema = DATABASE()
+      AND table_type = 'BASE TABLE';
   `;
 
-  for (const { table_name } of tableNames) {
-    await prisma.$executeRawUnsafe(`TRUNCATE TABLE \`${table_name}\`;`);
+  for (const row of tables) {
+    if (!row.table_name) continue; // 🔑 FIX
+
+    await prisma.$executeRawUnsafe(
+      `TRUNCATE TABLE \`${row.table_name}\`;`
+    );
   }
 
-  // Enable FK checks
   await prisma.$executeRawUnsafe(`SET FOREIGN_KEY_CHECKS = 1;`);
 });
 
