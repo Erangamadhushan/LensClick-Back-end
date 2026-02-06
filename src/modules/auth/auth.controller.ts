@@ -9,7 +9,9 @@ export const registerAdmin = asyncHandler(
     const { fullName, email, password, role } = req.body;
 
     // find existing user with same email and role
-    const exists = await prisma.user.findFirst({ where: { email, role: role.toUpperCase() } });
+    const exists = await prisma.user.findFirst({
+      where: { email, role: role.toUpperCase() },
+    });
 
     if (exists) throw { statusCode: 400, message: "User already exists" };
 
@@ -27,25 +29,45 @@ export const registerAdmin = asyncHandler(
 );
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password, role } = req.body;
+  try {
+    const { email, password, role } = req.body;
 
-  console.log("Login attempt:", { email, role });
-  const user = await prisma.user.findFirst({ where: { email, role: role.toUpperCase() } });
-  if (!user) throw { statusCode: 401, message: "Invalid credentials" };
+    if (!email || !password || !role) {
+      throw {
+        statusCode: 400,
+        message: "Email, password and role are required",
+      };
+    }
 
-  console.log("User found:", { id: user.id, email: user.email, role: user.role.toUpperCase() });
-  const valid = await comparePassword(password, user.password);
-  console.log("Password valid:", valid);
-  if (!valid) throw { statusCode: 401, message: "Invalid credentials" };
+    console.log("Login attempt:", { email, role });
+    const user = await prisma.user.findFirst({
+      where: { email, role: role.toUpperCase() },
+    });
+    if (!user) throw { statusCode: 401, message: "Invalid credentials" };
 
-  const token = signToken({
-    id: user.id,
-    email: user.email,
-    role: user.role.toUpperCase(),
-  });
-  console.log("Token generated:", token);
+    console.log("User found:", {
+      id: user.id,
+      email: user.email,
+      role: user.role.toUpperCase(),
+    });
+    const valid = await comparePassword(password, user.password);
+    console.log("Password valid:", valid);
+    if (!valid) throw { statusCode: 401, message: "Invalid credentials" };
 
-  res.json({ success: true, token });
+    const token = signToken({
+      id: user.id,
+      email: user.email,
+      role: user.role.toUpperCase(),
+    });
+    console.log("Token generated:", token);
+
+    res.json({ success: true, token });
+  } catch (error: any) {
+    res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "An error occurred during login",
+    });
+  }
 });
 
 export const verifySessionToken = asyncHandler(
@@ -54,7 +76,7 @@ export const verifySessionToken = asyncHandler(
     try {
       const decoded = verifyToken(token);
 
-      if (typeof decoded === 'string') {
+      if (typeof decoded === "string") {
         res.json({ success: true, valid: false, user: null });
         return;
       }
@@ -67,8 +89,12 @@ export const verifySessionToken = asyncHandler(
         res.json({ success: true, valid: false, user: null });
         return;
       }
-      res.json({ success: true, valid: true, user: { id: user.id, email: user.email, role: user.role.toUpperCase() } });
-    } catch (err) {
+      res.json({
+        success: true,
+        valid: true,
+        user: { id: user.id, email: user.email, role: user.role.toUpperCase() },
+      });
+    } catch (err: any) {
       res.json({ success: true, valid: false, user: null });
     }
   },
