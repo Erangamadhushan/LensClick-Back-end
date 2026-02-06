@@ -15,18 +15,29 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: test_db
+          MYSQL_DATABASE: testdb
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -proot"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
+          --health-retries=10
 
     env:
       NODE_ENV: test
-      DATABASE_URL: mysql://root:root@localhost:3306/test_db
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/testdb
+      PORT: 4000
+
+      JWT_SECRET: test-jwt-secret
+      JWT_EXPIRES_IN: 1d
+
+      ALBUM_TOKEN_SECRET: test-album-secret
+      ALBUM_TOKEN_EXPIRES_IN: 30d
+
+      CLOUDINARY_CLOUD_NAME: test
+      CLOUDINARY_API_KEY: test
+      CLOUDINARY_API_SECRET: test
 
     steps:
       - name: Checkout repository
@@ -36,10 +47,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "npm"
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Wait for MySQL
+        run: |
+          sudo apt-get install -y mysql-client
+          until mysql -h 127.0.0.1 -u root -proot -e "SELECT 1"; do
+            echo "Waiting for MySQL..."
+            sleep 3
+          done
 
       - name: Generate Prisma Client
         run: npx prisma generate
