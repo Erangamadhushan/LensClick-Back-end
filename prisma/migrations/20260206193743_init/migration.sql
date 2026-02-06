@@ -4,7 +4,7 @@ CREATE TABLE `User` (
     `name` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
-    `role` ENUM('ADMIN', 'PHOTOGRAPHER', 'CLIENT') NOT NULL,
+    `role` ENUM('ADMIN', 'PHOTOGRAPHER', 'CUSTOMER', 'ORGANIZER') NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     UNIQUE INDEX `User_email_key`(`email`),
@@ -50,11 +50,16 @@ CREATE TABLE `AlbumAccess` (
 -- CreateTable
 CREATE TABLE `Booking` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `name` VARCHAR(191) NOT NULL,
-    `email` VARCHAR(191) NOT NULL,
+    `organizerName` VARCHAR(191) NOT NULL,
+    `organizerEmail` VARCHAR(191) NOT NULL,
+    `phoneNumber` VARCHAR(191) NOT NULL,
+    `servicePackage` VARCHAR(191) NOT NULL,
     `eventType` ENUM('WEDDING', 'BIRTHDAY', 'CONVOCATION', 'OTHER') NOT NULL,
     `eventDate` DATETIME(3) NOT NULL,
-    `status` ENUM('PENDING', 'CONFIRMED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
+    `eventTime` VARCHAR(191) NOT NULL,
+    `eventLocation` VARCHAR(191) NOT NULL,
+    `eventDescription` VARCHAR(191) NOT NULL,
+    `status` ENUM('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED') NOT NULL DEFAULT 'PENDING',
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
